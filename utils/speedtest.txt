@@ -1,0 +1,8 @@
+speedtest results on mobile Core i7:
+
+Prepare data...
+Data prepared
+Preparation took: 2.241 sec; speed: 8.925 MB/s; body size: 20.000 MB
+Begin test...
+End test
+Test took: 1.650 sec; speed: 12.120 MB/s; body size: 20.000 MB
