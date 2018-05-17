@@ -176,7 +176,7 @@ cdef class _Parser:
 
     cdef int _parse(self, bytes chunk, size_t index,
                     size_t buffer_start, size_t buffer_end):
-        cdef size_t idx
+        cdef size_t idx, _idx
         cdef char byte
 
         for idx in range(index, len(chunk)):
