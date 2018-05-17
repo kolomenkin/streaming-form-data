@@ -17,7 +17,8 @@ cdef enum FinderState:
 # Knuth–Morris–Pratt algorithm
 cdef class Finder:
     cdef bytes target
-    cdef size_t index
+    cdef const char* target_ptr
+    cdef size_t index, target_len
     cdef FinderState state
 
     def __init__(self, target):
@@ -25,18 +26,20 @@ cdef class Finder:
             raise ValueError('Empty values not allowed')
 
         self.target = target
+        self.target_ptr = self.target
+        self.target_len = len(target)
         self.index = 0
         self.state = FinderState.FS_START
 
     cpdef feed(self, char byte):
-        if byte != self.target[self.index]:
+        if byte != self.target_ptr[self.index]:
             self.state = FinderState.FS_START
             self.index = 0
         else:
             self.state = FinderState.FS_WORKING
             self.index += 1
 
-            if self.index == len(self.target):
+            if self.index == self.target_len:
                 self.state = FinderState.FS_END
 
     cpdef reset(self):
@@ -178,9 +181,11 @@ cdef class _Parser:
                     size_t buffer_start, size_t buffer_end):
         cdef size_t idx, _idx
         cdef char byte
+        cdef const char* chunk_ptr
+        chunk_ptr = chunk
 
         for idx in range(index, len(chunk)):
-            byte = chunk[idx]
+            byte = chunk_ptr[idx]
 
             if self.state == ParserState.PS_START:
                 if byte != Constants.Hyphen:
@@ -208,10 +213,10 @@ cdef class _Parser:
                 if buffer_end - buffer_start < 4:
                     return 1
 
-                if chunk[buffer_start] == Constants.Hyphen and \
-                        chunk[buffer_start + 1] == Constants.Hyphen and \
-                        chunk[buffer_end - 1] == Constants.Hyphen and \
-                        chunk[buffer_end - 2] == Constants.Hyphen:
+                if chunk_ptr[buffer_start] == Constants.Hyphen and \
+                        chunk_ptr[buffer_start + 1] == Constants.Hyphen and \
+                        chunk_ptr[buffer_end - 1] == Constants.Hyphen and \
+                        chunk_ptr[buffer_end - 2] == Constants.Hyphen:
                     self.state = ParserState.PS_END
 
                 buffer_start = buffer_end = idx + 1
@@ -281,8 +286,8 @@ cdef class _Parser:
                     if buffer_end - buffer_start > self.ender_length:
                         _idx = buffer_end - self.ender_length
 
-                        if chunk[_idx - 1] == Constants.LF and \
-                                chunk[_idx - 2] == Constants.CR:
+                        if chunk_ptr[_idx - 1] == Constants.LF and \
+                                chunk_ptr[_idx - 2] == Constants.CR:
                             self.on_body(chunk[buffer_start: _idx - 2])
                         else:
                             self.on_body(chunk[buffer_start: _idx])
