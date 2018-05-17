@@ -14,6 +14,7 @@ cdef enum FinderState:
     FS_START, FS_WORKING, FS_END
 
 
+# Knuth–Morris–Pratt algorithm
 cdef class Finder:
     cdef bytes target
     cdef char *target_begin
