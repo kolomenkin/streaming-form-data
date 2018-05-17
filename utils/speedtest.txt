@@ -1,8 +1,9 @@
 speedtest results on mobile Core i7:
 
+Successfully installed streaming-form-data-0.4.5
 Prepare data...
 Data prepared
-Preparation took: 2.241 sec; speed: 8.925 MB/s; body size: 20.000 MB
+Preparation took: 11.659 sec; speed: 3.431 MB/s; body size: 40.000 MB
 Begin test...
 End test
-Test took: 1.650 sec; speed: 12.120 MB/s; body size: 20.000 MB
+Test took: 0.675 sec; speed: 59.261 MB/s; body size: 40.000 MB
