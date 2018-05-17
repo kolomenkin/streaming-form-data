@@ -18,7 +18,7 @@ cdef enum FinderState:
 cdef class Finder:
     cdef bytes target
     cdef char *target_begin
-    cdef long index, length
+    cdef size_t index, length
     cdef FinderState state
 
     def __init__(self, target):
@@ -49,6 +49,9 @@ cdef class Finder:
     @property
     def target(self):
         return self.target
+
+    cpdef char get_first_char(self):
+        return self.target_begin[0] if self.length > 0 else 0
 
     cpdef bint inactive(self):
         return self.state == FinderState.FS_START
@@ -102,7 +105,7 @@ cdef class _Parser:
     cdef bytes delimiter, ender
     cdef ParserState state
     cdef Finder delimiter_finder, ender_finder
-    cdef long delimiter_length, ender_length
+    cdef size_t delimiter_length, ender_length
     cdef object expected_parts
     cdef object active_part, default_part
 
@@ -174,8 +177,14 @@ cdef class _Parser:
 
     cdef int _parse(self, bytes chunk, long index,
                     long buffer_start, long buffer_end):
-        cdef long idx, byte, chunk_length = len(chunk)
+        cdef size_t idx, chunk_length = len(chunk)
+        cdef char byte
         cdef char *chunk_begin = chunk
+
+        cdef char first_char1 = self.delimiter_finder.get_first_char()
+        cdef char first_char2 = self.ender_finder.get_first_char()
+        cdef char *current
+        cdef size_t add = 0, maxadd = 0
 
         for idx in range(index, chunk_length):
             byte = chunk_begin[idx]
@@ -290,13 +299,21 @@ cdef class _Parser:
                     self.ender_finder.reset()
                 else:
                     if self.ender_finder.inactive() and \
-                            self.delimiter_finder.inactive() and \
-                            buffer_end - buffer_start > Constants.MaxBufferSize:
-                        _idx = buffer_end - 1
+                            self.delimiter_finder.inactive():
+                        current = &chunk_begin[idx + 1]
+                        add = 0
+                        maxadd = chunk_length - buffer_end
 
-                        self.on_body(chunk[buffer_start: _idx])
+                        while current[0] != first_char1 and current[0] != first_char2 and add < maxadd:
+                            add += 1
+                            current += 1
+                        buffer_end += add - 1 if add > 0 else 0
 
-                        buffer_start = idx
+                        if buffer_end - buffer_start > Constants.MaxBufferSize:
+                            _idx = buffer_end - 1
+                            self.on_body(chunk[buffer_start: _idx])
+                            buffer_start = idx
+
             elif self.state == ParserState.PS_END:
                 return 0
             else:
