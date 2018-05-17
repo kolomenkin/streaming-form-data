@@ -1,4 +1,5 @@
 import hashlib
+from os import path
 
 
 class BaseTarget:
@@ -6,6 +7,9 @@ class BaseTarget:
     it. Any new Target should inherit from this class and override
     data_received.
     """
+
+    def headers_parsed(self, content_disposition_dict):
+        pass
 
     def start(self):
         pass
@@ -35,13 +39,42 @@ class ValueTarget(BaseTarget):
 
 
 class FileTarget(BaseTarget):
-    def __init__(self, filename):
+    def __init__(self, filename, openmode='wb'):
         self.filename = filename
-
+        assert 'b' in openmode, \
+            'openmode should be binary. ' + \
+            'I.e. it should contain \'b\' character.' + \
+            'Current openmode: %s' % openmode
+        self.openmode = openmode
         self._fd = None
 
     def start(self):
-        self._fd = open(self.filename, 'wb')
+        self._fd = open(self.filename, self.openmode)
+
+    def data_received(self, chunk):
+        self._fd.write(chunk)
+
+    def finish(self):
+        self._fd.close()
+
+
+class FileTargetUsingRemoteName(BaseTarget):
+    def __init__(self, directory, openmode='wb'):
+        self.directory = directory
+        assert 'b' in openmode, \
+            'openmode should be binary. ' + \
+            'I.e. it should contain \'b\' character.' + \
+            'Current openmode: %s' % openmode
+        self.openmode = openmode
+        self.filename = None
+        self._fd = None
+
+    def headers_parsed(self, content_disposition_dict):
+        remote_name = content_disposition_dict['filename']
+        self.filename = path.join(self.directory, remote_name)
+
+    def start(self):
+        self._fd = open(self.filename, self.openmode)
 
     def data_received(self, chunk):
         self._fd.write(chunk)

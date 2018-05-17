@@ -66,6 +66,9 @@ class Part:
 
         self._reading = False
 
+    def headers_parsed(self, content_disposition_dict):
+        self.target.headers_parsed(content_disposition_dict)
+
     def start(self):
         self._reading = True
         self.target.start()
@@ -229,6 +232,7 @@ cdef class _Parser:
                     name = params.get('name')
                     if name:
                         part = self._part_for(name) or self.default_part
+                        part.headers_parsed(params)
                         part.start()
 
                         self.set_active_part(part)
