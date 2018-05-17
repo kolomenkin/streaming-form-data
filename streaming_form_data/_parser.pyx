@@ -156,7 +156,7 @@ cdef class _Parser:
             return 0
 
         cdef bytes chunk
-        cdef long index, buffer_start, buffer_end
+        cdef size_t index, buffer_start, buffer_end
 
         if self._leftover_buffer:
             chunk = self._leftover_buffer + data
@@ -175,14 +175,15 @@ cdef class _Parser:
 
         return self._parse(chunk, index, buffer_start, buffer_end)
 
-    cdef int _parse(self, bytes chunk, long index,
-                    long buffer_start, long buffer_end):
+    cdef int _parse(self, bytes chunk, size_t index,
+                    size_t buffer_start, size_t buffer_end):
         cdef size_t idx, chunk_length = len(chunk)
-        cdef char byte
+        cdef unsigned char byte
         cdef char *chunk_begin = chunk
 
-        cdef char first_char1 = self.delimiter_finder.get_first_char()
-        cdef char first_char2 = self.ender_finder.get_first_char()
+        cdef char first_char1 = '-'
+        # cdef char first_char1 = self.delimiter_finder.get_first_char()
+        # cdef char first_char2 = self.ender_finder.get_first_char()
         cdef char *current
         cdef size_t add = 0, maxadd = 0
 
@@ -301,13 +302,13 @@ cdef class _Parser:
                     if self.ender_finder.inactive() and \
                             self.delimiter_finder.inactive():
                         current = &chunk_begin[idx + 1]
-                        add = 0
-                        maxadd = chunk_length - buffer_end
+                        add = 1
+                        maxadd = chunk_length - idx - 1
 
-                        while current[0] != first_char1 and current[0] != first_char2 and add < maxadd:
+                        while add < maxadd and current[0] != first_char1:  # and current[0] != first_char2:
                             add += 1
                             current += 1
-                        buffer_end += add - 1 if add > 0 else 0
+                        buffer_end += add - 1
 
                         if buffer_end - buffer_start > Constants.MaxBufferSize:
                             _idx = buffer_end - 1
