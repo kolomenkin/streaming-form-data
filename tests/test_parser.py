@@ -54,7 +54,8 @@ class StreamingFormDataParserTestCase(TestCase):
 
         for header_key in (content_type_header,
                            content_type_header.lower(),
-                           content_type_header.upper()):
+                           content_type_header.upper(),
+                           'cOnTeNt-tYPe'):
             target = ValueTarget()
 
             encoder = MultipartEncoder(fields={'value': 'hello world'})

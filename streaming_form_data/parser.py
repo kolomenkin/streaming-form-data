@@ -10,9 +10,18 @@ class ParseFailedException(Exception):
 def parse_content_boundary(headers):
     content_type_header = 'Content-Type'
 
+    # try finding popular case forms
+    # (this block is for speed optimization only)
     content_type = headers.get(content_type_header) or \
         headers.get(content_type_header.lower()) or \
         headers.get(content_type_header.upper())
+
+    # try other case forms
+    if not content_type:
+        for key in headers:
+            if key.lower() == 'content-type':
+                content_type = headers.get(key)
+                break
 
     if not content_type:
         raise ParseFailedException()
