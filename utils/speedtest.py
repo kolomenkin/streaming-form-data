@@ -1,22 +1,22 @@
 from io import BytesIO
-from random import seed, randint
 from requests_toolbelt import MultipartEncoder
 from streaming_form_data.parser import StreamingFormDataParser
 from streaming_form_data.targets import NullTarget
 from time import time
 
+
 def main():
     print('Prepare data...')
     begin_time = time()
 
-    seed(a = 42)
-    filedata_size = 20 * 1024 * 1024
+    filedata_size = 40 * 1024 * 1024
     filedata = bytearray(filedata_size)
 
-    value = 0
+    value = 42
     for i in range(0, filedata_size):
-        filedata[i] = value # randint(0, 255) # randint is better but slower
-        value = value + 1 if value != 255 else 0
+        filedata[i] = value % 256
+        # value = value + 1 if value != 255 else 0
+        value = (value * 48271) % 2147483647  # std::minstd_rand
 
     with BytesIO(filedata) as fd:
         content_type = 'binary/octet-stream'
@@ -27,7 +27,7 @@ def main():
         headers = {'Content-Type': encoder.content_type}
         body = encoder.to_string()
 
-    filedata = None # free memory
+    filedata = None  # free memory
     parser = StreamingFormDataParser(headers)
     parser.register('name', NullTarget())
     parser.register('lines', NullTarget())
@@ -41,15 +41,16 @@ def main():
     end_time = time()
     print('Data prepared')
     time_diff = end_time - begin_time
-    print('Preparation took: %.3f sec; speed: %.3f MB/s; body size: %.3f MB'
-        % (time_diff,
-        (body_length / time_diff / (1024*1024) if time_diff > 0 else 0),
-        body_length / (1024*1024)))
+    print('Preparation took: %.3f sec; speed: %.3f MB/s; body size: %.3f MB' %
+          (time_diff,
+           (body_length / time_diff / (1024*1024) if time_diff > 0 else 0),
+           body_length / (1024*1024)))
     print('Begin test...')
 
     begin_time = time()
     while remaining > 0:
-        chunksize = defaultChunksize if remaining >= defaultChunksize else remaining
+        chunksize = defaultChunksize \
+            if remaining >= defaultChunksize else remaining
         parser.data_received(body[position: position + chunksize])
         remaining -= chunksize
         position += chunksize
@@ -57,10 +58,11 @@ def main():
 
     print('End test')
     time_diff = end_time - begin_time
-    print('Test took: %.3f sec; speed: %.3f MB/s; body size: %.3f MB'
-        % (time_diff,
-        (body_length / time_diff / (1024*1024) if time_diff > 0 else 0),
-        body_length / (1024*1024)))
+    print('Test took: %.3f sec; speed: %.3f MB/s; body size: %.3f MB' %
+          (time_diff,
+           (body_length / time_diff / (1024*1024) if time_diff > 0 else 0),
+           body_length / (1024*1024)))
+
 
 if __name__ == '__main__':
     main()
