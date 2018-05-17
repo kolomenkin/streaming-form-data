@@ -7,13 +7,14 @@ cdef enum Constants:
     Hyphen = 45
     CR = 13
     LF = 10
-    MaxBufferSize = 1024
+    MinFileBodyChunkSize = 1024
 
 
 cdef enum FinderState:
     FS_START, FS_WORKING, FS_END
 
 
+# Knuth–Morris–Pratt algorithm
 cdef class Finder:
     cdef bytes target
     cdef size_t index
@@ -55,6 +56,8 @@ cdef class Finder:
     cpdef bint found(self):
         return self.state == FinderState.FS_END
 
+    cpdef size_t matched_length(self):
+        return self.index
 
 class Part:
     """One part of a multipart/form-data request
@@ -288,19 +291,18 @@ cdef class _Parser:
 
                     self.unset_active_part()
                     self.ender_finder.reset()
-                else:
-                    if self.ender_finder.inactive() and \
-                            self.delimiter_finder.inactive() and \
-                            buffer_end - buffer_start > Constants.MaxBufferSize:
-                        _idx = buffer_end - 1
-
-                        self.on_body(chunk[buffer_start: _idx])
-
-                        buffer_start = idx
             elif self.state == ParserState.PS_END:
                 return 0
             else:
                 return 1
+
+        if self.state == ParserState.PS_READING_BODY and \
+                buffer_end - buffer_start > Constants.MinFileBodyChunkSize:
+            _idx = buffer_end - 1 - \
+                max(self.delimiter_finder.matched_length(),
+                    self.ender_finder.matched_length())
+            self.on_body(chunk[buffer_start: _idx])
+            buffer_start = idx
 
         if buffer_end - buffer_start > 0:
             self._leftover_buffer = chunk[buffer_start: buffer_end]
