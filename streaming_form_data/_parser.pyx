@@ -302,9 +302,9 @@ cdef class _Parser:
                     # delimiter starting sequence '--' when
                     # we are not already in the middle of potential delimiter
 
-                    if 1 == 2 and self.ender_finder.inactive() and \
+                    if self.ender_finder.inactive() and \
                             self.delimiter_finder.inactive() and \
-                            idx + 1 + 10 < chunk_len:
+                            idx + 1 < chunk_len:
 
                         # potentially fast forwarded chars:
                         # chunk[idx+1 ..  chunk_len-1] (including borders)
@@ -312,11 +312,13 @@ cdef class _Parser:
                         # ptr_last = &chunk_ptr[chunk_len - 1]
 
                         # for ptr in xrange(ptr_first, ptr_last):
-                        for _idx in xrange(idx + 1, chunk_len - 1 - 5):
+                        for _idx in xrange(idx + 1, chunk_len - 1):
                             if chunk_ptr[_idx] != '-' or chunk_ptr[_idx + 1] != '-':
-                                # buffer_end += 1
-                                # idx += 1
+                                buffer_end += 1
+                                idx += 1
                                 pass
+                            else:
+                                break
 
             elif self.state == ParserState.PS_END:
                 return 0
