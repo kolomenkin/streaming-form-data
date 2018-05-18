@@ -158,26 +158,24 @@ cdef class _Parser:
             return 0
 
         cdef bytes chunk
-        cdef size_t index, buffer_start, buffer_end
+        cdef size_t buffer_start, buffer_end
 
         if self._leftover_buffer:
             chunk = self._leftover_buffer + data
 
-            index = len(self._leftover_buffer)
             buffer_start = 0
-            buffer_end = index
+            buffer_end = len(self._leftover_buffer)
 
             self._leftover_buffer = None
         else:
             chunk = data
 
-            index = 0
             buffer_start = 0
             buffer_end = 0
 
-        return self._parse(chunk, index, buffer_start, buffer_end)
+        return self._parse(chunk, buffer_start, buffer_end)
 
-    cdef int _parse(self, bytes chunk, size_t index,
+    cdef int _parse(self, bytes chunk,
                     size_t buffer_start, size_t buffer_end):
         cdef size_t idx, chunk_len, _idx
         cdef char byte
@@ -185,7 +183,7 @@ cdef class _Parser:
         chunk_ptr = chunk
         chunk_len = len(chunk)
 
-        for idx in range(index, chunk_len):
+        for idx in xrange(buffer_end, chunk_len):
             byte = chunk_ptr[idx]
 
             if self.state == ParserState.PS_START:
