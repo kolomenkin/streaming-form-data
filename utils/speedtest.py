@@ -7,20 +7,27 @@ from time import time
 
 
 class DummyTarget(BaseTarget):
-    def __init__(self, print_report):
-        self.report = print_report
+    def __init__(self, print_report, gather_data):
+        self.print_report = print_report
+        self.gather_data = gather_data
+        self.result = bytearray()
 
     def start(self):
-        if self.report:
+        if self.print_report:
             print('DummyTarget: start')
 
     def data_received(self, chunk):
-        if self.report:
+        if self.print_report:
             print('DummyTarget: data_received:', len(chunk), 'bytes')
+        if self.gather_data:
+            self.result += chunk
 
     def finish(self):
-        if self.report:
+        if self.print_report:
             print('DummyTarget: finish')
+
+    def get_result(self):
+        return self.result
 
 
 def fill_bytes_random_fast(size):
@@ -48,13 +55,16 @@ def main():
         headers = {'Content-Type': encoder.content_type}
         body = encoder.to_string()
 
-    filedata = None  # free memory
+    print_report = False
+    gather_data = False
+    target = DummyTarget(print_report=print_report, gather_data=gather_data)
+
     parser = StreamingFormDataParser(headers)
     parser.register('name', NullTarget())
     parser.register('lines', NullTarget())
-    parser.register('file', DummyTarget(print_report=False))
+    parser.register('file', target)
 
-    defaultChunksize = 32 * kibibyte
+    defaultChunksize = 320 * kibibyte
     position = 0
     body_length = len(body)
     remaining = body_length
@@ -66,6 +76,7 @@ def main():
           (time_diff,
            (body_length / time_diff / mebibyte if time_diff > 0 else 0),
            body_length / mebibyte))
+
     print('Begin test...')
 
     begin_time = time()
@@ -77,6 +88,15 @@ def main():
     end_time = time()
 
     print('End test')
+
+    if gather_data:
+        result = target.get_result()
+        if result != filedata:
+            print('-------------------------------------------')
+            print('ERROR! Decoded data mismatch! Orig size: ',
+                  len(filedata), '; got size:', len(result))
+            print('-------------------------------------------')
+
     time_diff = end_time - begin_time
     print('Test took: %.3f sec; speed: %.3f MB/s; body size: %.3f MB' %
           (time_diff,
