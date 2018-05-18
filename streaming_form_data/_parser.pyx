@@ -179,12 +179,13 @@ cdef class _Parser:
 
     cdef int _parse(self, bytes chunk, size_t index,
                     size_t buffer_start, size_t buffer_end):
-        cdef size_t idx, _idx
+        cdef size_t idx, chunk_len, _idx
         cdef char byte
-        cdef const char* chunk_ptr
+        cdef const char *chunk_ptr, *ptr, *ptr_first, *ptr_last
         chunk_ptr = chunk
+        chunk_len = len(chunk)
 
-        for idx in range(index, len(chunk)):
+        for idx in range(index, chunk_len):
             byte = chunk_ptr[idx]
 
             if self.state == ParserState.PS_START:
@@ -296,6 +297,27 @@ cdef class _Parser:
 
                     self.unset_active_part()
                     self.ender_finder.reset()
+                else:
+                    # The following block is for speedup only
+                    # The idea is to skip all data not containing
+                    # delimiter starting sequence '--' when
+                    # we are not already in the middle of potential delimiter
+
+                    if self.ender_finder.inactive() and \
+                            self.delimiter_finder.inactive() and \
+                            idx + 1 < chunk_len:
+
+                        # potentially fast forwarded chars:
+                        # chunk[idx+1 ..  chunk_len-1] (including borders)
+                        ptr_first = &chunk_ptr[idx + 1]
+                        ptr_last = &chunk_ptr[chunk_len - 1]
+
+                        for ptr in range(ptr_first, ptr_last):
+                            if ptr[0] != '-' or ptr[1] != '-':
+                                buffer_end += 1
+                                idx += 1
+                                pass
+
             elif self.state == ParserState.PS_END:
                 return 0
             else:
