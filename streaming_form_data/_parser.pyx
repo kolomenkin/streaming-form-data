@@ -305,17 +305,18 @@ cdef class _Parser:
 
                     if self.ender_finder.inactive() and \
                             self.delimiter_finder.inactive() and \
-                            idx + 1 < chunk_len:
+                            idx + 1 + 10 < chunk_len:
 
                         # potentially fast forwarded chars:
                         # chunk[idx+1 ..  chunk_len-1] (including borders)
-                        ptr_first = &chunk_ptr[idx + 1]
-                        ptr_last = &chunk_ptr[chunk_len - 1]
+                        # ptr_first = &chunk_ptr[idx + 1]
+                        # ptr_last = &chunk_ptr[chunk_len - 1]
 
-                        for ptr in range(ptr_first, ptr_last):
-                            if ptr[0] != '-' or ptr[1] != '-':
-                                buffer_end += 1
-                                idx += 1
+                        # for ptr in range(ptr_first, ptr_last):
+                        for _idx in range(idx + 1, chunk_len - 1 - 5):
+                            if chunk_ptr[_idx] != '-' or chunk_ptr[_idx + 1] != '-':
+                                # buffer_end += 1
+                                # idx += 1
                                 pass
 
             elif self.state == ParserState.PS_END:
