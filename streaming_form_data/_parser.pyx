@@ -179,7 +179,7 @@ cdef class _Parser:
                     size_t buffer_start, size_t buffer_end):
         cdef size_t idx, chunk_len, _idx
         cdef char byte
-        cdef const char *chunk_ptr, *ptr, *ptr_first, *ptr_last
+        cdef const char *chunk_ptr
         chunk_ptr = chunk
         chunk_len = len(chunk)
 
@@ -302,21 +302,20 @@ cdef class _Parser:
                     # delimiter starting sequence '--' when
                     # we are not already in the middle of potential delimiter
 
-                    if 1 == 2 and self.ender_finder.inactive() and \
+                    if self.ender_finder.inactive() and \
                             self.delimiter_finder.inactive() and \
-                            idx + 1 + 10 < chunk_len:
+                            idx + 1 < chunk_len:
 
                         # potentially fast forwarded chars:
                         # chunk[idx+1 ..  chunk_len-1] (including borders)
-                        # ptr_first = &chunk_ptr[idx + 1]
-                        # ptr_last = &chunk_ptr[chunk_len - 1]
 
-                        # for ptr in xrange(ptr_first, ptr_last):
-                        for _idx in xrange(idx + 1, chunk_len - 1 - 5):
+                        for _idx in xrange(idx + 1, chunk_len - 1):
                             if chunk_ptr[_idx] != '-' or chunk_ptr[_idx + 1] != '-':
-                                # buffer_end += 1
-                                # idx += 1
+                                buffer_end += 1
+                                idx += 1
                                 pass
+                            else:
+                                break
 
             elif self.state == ParserState.PS_END:
                 return 0
