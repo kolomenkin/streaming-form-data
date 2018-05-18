@@ -57,6 +57,8 @@ def main():
 
     print_report = False
     gather_data = False
+    if not gather_data:
+        filedata = None  # free memory
     target = DummyTarget(print_report=print_report, gather_data=gather_data)
 
     parser = StreamingFormDataParser(headers)
@@ -64,7 +66,7 @@ def main():
     parser.register('lines', NullTarget())
     parser.register('file', target)
 
-    defaultChunksize = 320 * kibibyte
+    defaultChunksize = 32 * kibibyte
     position = 0
     body_length = len(body)
     remaining = body_length
