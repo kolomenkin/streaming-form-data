@@ -183,7 +183,8 @@ cdef class _Parser:
         chunk_ptr = chunk
         chunk_len = len(chunk)
 
-        for idx in xrange(buffer_end, chunk_len):
+        idx = buffer_end
+        while idx < chunk_len:
             byte = chunk_ptr[idx]
 
             if self.state == ParserState.PS_START:
@@ -301,7 +302,7 @@ cdef class _Parser:
                     # delimiter starting sequence '--' when
                     # we are not already in the middle of potential delimiter
 
-                    if self.ender_finder.inactive() and \
+                    if 1 == 2 and self.ender_finder.inactive() and \
                             self.delimiter_finder.inactive() and \
                             idx + 1 + 10 < chunk_len:
 
@@ -310,8 +311,8 @@ cdef class _Parser:
                         # ptr_first = &chunk_ptr[idx + 1]
                         # ptr_last = &chunk_ptr[chunk_len - 1]
 
-                        # for ptr in range(ptr_first, ptr_last):
-                        for _idx in range(idx + 1, chunk_len - 1 - 5):
+                        # for ptr in xrange(ptr_first, ptr_last):
+                        for _idx in xrange(idx + 1, chunk_len - 1 - 5):
                             if chunk_ptr[_idx] != '-' or chunk_ptr[_idx + 1] != '-':
                                 # buffer_end += 1
                                 # idx += 1
@@ -322,13 +323,15 @@ cdef class _Parser:
             else:
                 return 1
 
+            idx += 1
+
         if self.state == ParserState.PS_READING_BODY and \
                 buffer_end - buffer_start > Constants.MinFileBodyChunkSize:
             _idx = buffer_end - 1 - \
                 max(self.delimiter_finder.matched_length(),
                     self.ender_finder.matched_length())
             self.on_body(chunk[buffer_start: _idx])
-            buffer_start = idx
+            buffer_start = idx - 1
 
         if buffer_end - buffer_start > 0:
             self._leftover_buffer = chunk[buffer_start: buffer_end]
