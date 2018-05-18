@@ -6,6 +6,7 @@ clean:
 # PyPI archive preparation
 build:
 	python setup.py sdist
+	python -m cython -a streaming_form_data/_parser.pyx -o annotation.html
 
 upload: build
 	twine upload dist/*
