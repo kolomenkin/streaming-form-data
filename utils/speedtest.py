@@ -1,4 +1,5 @@
 from io import BytesIO
+from numpy import random
 from requests_toolbelt import MultipartEncoder
 from streaming_form_data.parser import StreamingFormDataParser
 from streaming_form_data.targets import NullTarget, BaseTarget
@@ -21,6 +22,9 @@ class DummyTarget(BaseTarget):
         if self.report:
             print('DummyTarget: finish')
 
+def fill_bytes_random_fast(size):
+    random.seed(42)
+    return random.bytes(size)
 
 def main():
     print('Prepare data...')
@@ -29,13 +33,9 @@ def main():
     kibibyte = 1024
     mebibyte = kibibyte * kibibyte
     filedata_size = 40 * mebibyte
-    filedata = bytearray(filedata_size)
 
-    value = 42
-    for i in range(0, filedata_size):
-        filedata[i] = value % 256
-        # value = value + 1 if value != 255 else 0
-        value = (value * 48271) % 2147483647  # std::minstd_rand
+    filedata = fill_bytes_random_fast(filedata_size)
+    #print('data sample:', filedata[0:100])
 
     with BytesIO(filedata) as fd:
         content_type = 'binary/octet-stream'
