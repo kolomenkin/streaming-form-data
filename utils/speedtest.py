@@ -22,9 +22,11 @@ class DummyTarget(BaseTarget):
         if self.report:
             print('DummyTarget: finish')
 
+
 def fill_bytes_random_fast(size):
     random.seed(42)
     return random.bytes(size)
+
 
 def main():
     print('Prepare data...')
@@ -35,7 +37,7 @@ def main():
     filedata_size = 40 * mebibyte
 
     filedata = fill_bytes_random_fast(filedata_size)
-    #print('data sample:', filedata[0:100])
+    # print('data sample:', filedata[0:100])
 
     with BytesIO(filedata) as fd:
         content_type = 'binary/octet-stream'
