@@ -213,13 +213,15 @@ cdef class _Parser:
                 if buffer_end - buffer_start < 4:
                     return 1
 
+                # WHAT IS IT FOR???
                 if chunk_ptr[buffer_start] == Constants.Hyphen and \
                         chunk_ptr[buffer_start + 1] == Constants.Hyphen and \
                         chunk_ptr[buffer_end - 1] == Constants.Hyphen and \
                         chunk_ptr[buffer_end - 2] == Constants.Hyphen:
-                    self.state = ParserState.PS_END
+                    return 0
 
-                buffer_start = buffer_end = idx + 1
+                buffer_start = idx + 1
+                buffer_end = buffer_start
 
                 self.state = ParserState.PS_READING_HEADER
             elif self.state == ParserState.PS_READING_HEADER:
@@ -246,7 +248,8 @@ cdef class _Parser:
 
                         self.set_active_part(part)
 
-                buffer_start = buffer_end = idx + 1
+                buffer_start = idx + 1
+                buffer_end = buffer_start
 
                 self.state = ParserState.PS_ENDED_HEADER
             elif self.state == ParserState.PS_ENDED_HEADER:
@@ -260,7 +263,8 @@ cdef class _Parser:
                 if byte != Constants.LF:
                     return 1
 
-                buffer_start = buffer_end = idx + 1
+                buffer_start = idx + 1
+                buffer_end = buffer_start
                 self.state = ParserState.PS_READING_BODY
             elif self.state == ParserState.PS_READING_BODY:
                 buffer_end += 1
@@ -276,7 +280,8 @@ cdef class _Parser:
 
                         self.on_body(chunk[buffer_start: _idx - 2])
 
-                        buffer_start = buffer_end = idx + 1
+                        buffer_start = idx + 1
+                        buffer_end = buffer_start
 
                     self.unset_active_part()
                     self.delimiter_finder.reset()
@@ -292,7 +297,8 @@ cdef class _Parser:
                         else:
                             self.on_body(chunk[buffer_start: _idx])
 
-                        buffer_start = buffer_end = idx + 1
+                        buffer_start = idx + 1
+                        buffer_end = buffer_start
 
                     self.unset_active_part()
                     self.ender_finder.reset()
@@ -310,7 +316,7 @@ cdef class _Parser:
                         # chunk[idx+1 ..  chunk_len-1] (including borders)
 
                         for _idx in xrange(idx + 1, chunk_len - 1):
-                            if chunk_ptr[_idx] != '-' or chunk_ptr[_idx + 1] != '-':
+                            if chunk_ptr[_idx] != Constants.Hyphen or chunk_ptr[_idx + 1] != Constants.Hyphen:
                                 buffer_end += 1
                                 idx += 1
                                 pass
@@ -318,7 +324,10 @@ cdef class _Parser:
                                 break
 
             elif self.state == ParserState.PS_END:
-                return 0
+                # print('ERROR! ParserState.PS_END; idx: ', idx, '; buffer_start: ', buffer_start, '; buffer_end: ', buffer_end, '; chunk_len:', chunk_len)
+                # we have CR LF still in the chunk, but we don't care
+                # REMOVE THIS STATE!
+                return 0  # ?????????? SHOULD WE EVER GO HERE????
             else:
                 return 1
 
@@ -326,11 +335,12 @@ cdef class _Parser:
 
         if self.state == ParserState.PS_READING_BODY and \
                 buffer_end - buffer_start > Constants.MinFileBodyChunkSize:
-            _idx = buffer_end - 1 - \
+            _idx = buffer_end - \
                 max(self.delimiter_finder.matched_length(),
                     self.ender_finder.matched_length())
             self.on_body(chunk[buffer_start: _idx])
-            buffer_start = idx - 1
+            buffer_start = _idx
+            # buffer_end = idx
 
         if buffer_end - buffer_start > 0:
             self._leftover_buffer = chunk[buffer_start: buffer_end]
