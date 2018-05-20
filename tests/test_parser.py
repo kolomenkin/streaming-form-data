@@ -24,6 +24,20 @@ def open_dataset(filename):
         filedata = get_random_bytes(437814, 500)
     elif filename == 'image-high-res.jpg':
         filedata = get_random_bytes(9450866, 945)
+    elif filename == 'empty.html':
+        filedata = b''
+    elif filename == 'hyphen-hyphen.txt':
+        filedata = b'--'
+    elif filename == 'LF.txt':
+        filedata = b'\n'
+    elif filename == 'CRLF.txt':
+        filedata = b'\r\n'
+    elif filename == '1M.dat':
+        filedata = get_random_bytes(1024 * 1024, 1024)
+    elif filename == '1M-1.dat':
+        filedata = get_random_bytes(1024 * 1024 - 1, 1024 - 1)
+    elif filename == '1M+1.dat':
+        filedata = get_random_bytes(1024 * 1024 + 1, 1024 + 1)
     else:
         raise Exception('Unknown file name: ' + filename)
     return BytesIO(filedata)
@@ -214,7 +228,9 @@ class StreamingFormDataParserTestCase(TestCase):
         self.assertEqual(second.value, expected_second_value.encode('utf-8'))
 
     def test_file_content_single(self):
-        filenames = ('file.txt', 'image-600x400.png', 'image-2560x1600.png')
+        filenames = ('file.txt', 'image-600x400.png', 'image-2560x1600.png',
+                     'empty.html', 'hyphen-hyphen.txt', 'LF.txt', 'CRLF.txt',
+                     '1M.dat', '1M-1.dat', '1M+1.dat')
 
         for filename in filenames:
             with open_dataset(filename) as dataset_:
