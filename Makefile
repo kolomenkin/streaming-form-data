@@ -32,7 +32,7 @@ upload: build
 install_local: $(install_local_output) ;
 
 test: $(install_local_output)
-	py.test
+	py.test -s
 	flake8
 
 speedtest: $(install_local_output)
